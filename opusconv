@@ -9,6 +9,7 @@ Usage:
 Doesn't work with wildcards, to run over multiple files, use:
 > for f in *.flac; do opusconv -m "$f"; done
 Ensure that opus-tools and aviconv (ffmpeg) are installed.
+Edit the --bitrate flag as needed 
 "
 
 
@@ -16,7 +17,7 @@ while getopts 'm:s:' OPTION
 do
   case $OPTION in
   m)
-  	avconv -i "$OPTARG" -f wav - | opusenc --music --bitrate 72 - "$OPTARG.opus"
+  	avconv -i "$OPTARG" -f wav - | opusenc --music --bitrate 94 - "$OPTARG.opus"
   	exit 2
 		;;
   s)
