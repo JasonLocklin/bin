@@ -1,0 +1,5 @@
+#!/bin/sh
+# Upstream remote should be created with git remote add upstream git://<etc>
+git fetch upstream
+git checkout master $$ git merge upstream/master
+git commit -a -m"Update from upstream"
