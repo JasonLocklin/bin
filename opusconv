@@ -1,0 +1,33 @@
+#!/bin/sh
+
+usage="
+Convert nearly any multimedia file into the Opus format
+Usage:
+   opusconv -s speechaudio.wav
+   opusconv -m music.mp3
+Ensure that opus-tools and aviconv (ffmpeg) are installed.
+"
+
+
+while getopts 'm:s:' OPTION
+do
+  case $OPTION in
+  m)
+  	avconv -i "$OPTARG" -f wav - | opusenc --music --bitrate 96 - "$OPTARG.opus"
+  	exit 2
+		;;
+  s)
+		avconv -i "$OPTARG" -f wav - | opusenc --speech --bitrate 16 - "$OPTARG.opus"
+		exit 2
+		;;
+  ?)	
+    echo "$usage"
+		exit 2
+		;;
+  esac
+done
+
+
+
+
+
