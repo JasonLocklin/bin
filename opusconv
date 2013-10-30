@@ -5,6 +5,9 @@ Convert nearly any multimedia file into the Opus format
 Usage:
    opusconv -s speechaudio.wav
    opusconv -m music.mp3
+
+Doesn't work with wildcards, to run over multiple files, use:
+> for f in *.flac; do opusconv -m "$f"; done
 Ensure that opus-tools and aviconv (ffmpeg) are installed.
 "
 
@@ -13,7 +16,7 @@ while getopts 'm:s:' OPTION
 do
   case $OPTION in
   m)
-  	avconv -i "$OPTARG" -f wav - | opusenc --music --bitrate 96 - "$OPTARG.opus"
+  	avconv -i "$OPTARG" -f wav - | opusenc --music --bitrate 72 - "$OPTARG.opus"
   	exit 2
 		;;
   s)
