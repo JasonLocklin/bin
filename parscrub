@@ -30,14 +30,14 @@ STRT=$(pwd)
 find . -type d -and -not -path ".*/.*" | while read dir
 do
   echo "moving to $dir"
-  cd $dir
+  cd "$dir"
 
   # If par2 files exist:
   if $(ls .check.par2)
   then
     emptydir=false
     # Run par2 verify on them, if any problems (missing files, curruption), stop.
-    # Also, save output to a variable.
+    # Also, save output to a file for extracting the filenames.
     echo "Pairity files exist in this directory. Verifying..."
     par2 v -m512 .check.par2 | tee par_error.txt || exit 1
 
