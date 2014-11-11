@@ -1,5 +1,10 @@
 #!/bin/sh
+#  Run this while in a git repository to change it's default behavior so that any commit is
+#  automatically pushed to the remote repository -saving the need to run git push after git commit
+#
 # Source: https://github.com/chopmo/git-autopush
+
+
 
 usage()
 {

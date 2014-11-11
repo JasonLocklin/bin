@@ -1,0 +1,92 @@
+#!/bin/sh
+# Script to create and verify parity of all files recursively.
+
+# Intention: to create a way to monitor an entire subdirectory for
+# file corruptions (bitrot), and repair them if necissary. Running this
+# regularily, or before backups, will ensure that irrecoverable errors
+# do not crop into one's files when syncing to another machine (i.e.,
+# backup), or other glitches on storage devices. Of course, resiliancy
+# is determined by the redundancy value passed to par2 when creating
+# the pairity files. The idea is inspired by the "scrub" feature of
+# the zfs and btrfs filesystems. Here, new pairity files are only
+# created when the script is run, not online like with those filesystems.
+# However, here, the parity files reside as hidden files in each directory,
+# so they move with the files when they are transfered from one device or
+# machine to another.
+
+# When run, all files in the current directory and all sub-directories
+# are checked for corruption by par2. Wherever par2 blockfiles are not
+# present, they are created. If new files have been added to a directory,
+# it is still checked, but then new, complete, par2 files are computed
+# for all files in that directory.
+
+# This is intended to be non-destructive to all non-par2 files. Only a
+# couple temp files and par2 files are ever written to or erased. If par2
+# encounters an error (like a file needing to be repaired), the script
+# simply exits so that 'par2repair' can be run manually. I also intentionally
+# left this script inflexible (without arguments). I want it to be reliable
+# in it's current form. If a different function is desired (such as changing
+# a parameter to par2), then one should make the change below and thouroughly
+# test the modified script. The script is intended to be simple and
+# readable to facilitate this type of use.
+
+# Author: Jason Locklin
+
+
+STRT=$(pwd)
+
+# Recurse into each subdirectory
+# (ignore directories starting with a '.' like .git or .svn)
+find . -type d -and -not -path ".*/.*" | while read dir
+do
+  echo "moving to $dir"
+  cd "$dir"
+
+  # If par2 files exist:
+  if $(ls .check.par2)
+  then
+    emptydir=false
+    # Run par2 verify on them, if any problems (missing files, curruption), stop.
+    # Also, save output to a file for extracting the filenames.
+    echo "Pairity files exist in this directory. Verifying..."
+    par2 v -m512 .check.par2 | tee par_error.txt || exit 1
+
+    #extract filenames from archive output:
+    grep "Target" par_error.txt | sed 's/\(.*\)\"\(.*\)\"\(.*\)/\2/' > .archivelist
+    rm par_error.txt #everything went smoothly, not needed.
+
+    #Compare with directory list;
+    find -maxdepth 1 -type f -printf "%f\n" | grep -u ".par2" > .filelist
+    unique=$( cat .archivelist .filelist | sort | uniq -u )
+    if [ "${#unique}" != "0" ]
+    then
+      echo "New files in current directory: $unique"
+      newfiles=true
+    else
+      echo "No new files in directory, moving on to next one..."
+      newfiles=false
+    fi
+    rm .archivelist
+    rm .filelist   #removing temporary files
+
+  else
+    echo "No existing pairity files in current directory."
+    emptydir=true
+  fi
+
+  # If files in directory not covered by existing par2 files (no par2 files OR new files).
+  if $newfiles || $emptydir
+  then
+    #Check for empty directory ('par2 c *' fails in empty directories) 
+    if [ "$(ls -A )" ]; then
+      echo "Creating new pairity files..."
+      rm *.par2 # warning: potentially destructive.
+      # Create new par2 files for files in current directory.
+      par2 c -m512 -r5 -n1 .check.par2 * || exit 1
+    else
+     echo "Directory is is Empty"
+    fi
+  fi
+  cd $STRT # Return to starting directory
+done
+
